@@ -11,5 +11,4 @@ let main argv =
     let result = getFirstDuplicateFrequency "input.txt" 0
     printfn "%A" (result)
     let text = Console.ReadLine()
-    0
     0 // return an integer exit code

@@ -1,6 +1,5 @@
 ﻿module Day1
 open CommonLib.Files
-open CommonLib.Collections
 
 let getIntFromStringWithSignal s =
     System.Int32.Parse(s, System.Globalization.NumberStyles.AllowLeadingSign)
@@ -19,13 +18,12 @@ let getInitialResultingFrequency (fileName:string) (initialFrequency:int) =
 let getFirstDuplicateFrequency (fileName:string) (initialFrequency:int) =
     let values = getIntValuesFromFile fileName
     let mutable currentFrequency = initialFrequency
-    let mutable tree = None : Leaf option
+    let mutable history : Set<int> = set []
     let mutable doubleFrequency = 0
     while (doubleFrequency = 0) do
         for i in values do
             currentFrequency <- getNewFrequency currentFrequency i
-            let duplicateValue = searchForLeaf tree currentFrequency
-            if (duplicateValue <> None && doubleFrequency = 0)
+            if (history.Contains currentFrequency && doubleFrequency = 0)
             then doubleFrequency <- currentFrequency
-            else tree <- Some (insertLeaf tree currentFrequency)
+            else history <- history.Add currentFrequency
     doubleFrequency

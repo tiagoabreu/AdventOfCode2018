@@ -6,7 +6,6 @@
 
   <ItemGroup>
     <Compile Include="Files.fs" />
-    <Compile Include="Collections.fs" />
   </ItemGroup>
 
 </Project>

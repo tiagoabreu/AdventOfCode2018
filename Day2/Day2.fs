@@ -30,9 +30,9 @@ let getCheckSumOfIds (repetitionCheck:int[]) (idArr:string[]) =
                     incrementCountInCheckSum checkSumValues repetition
 
         let charArr = explode str
-        Array.map (processRepetition charArr) repetitionCheck |> ignore
+        Array.iter (processRepetition charArr) repetitionCheck
 
-    Array.map processRepetitions idArr |> ignore
+    Array.iter processRepetitions idArr
 
     Array.map (fun x -> snd x) checkSumValues
     |> calculateCheckSum
@@ -40,3 +40,31 @@ let getCheckSumOfIds (repetitionCheck:int[]) (idArr:string[]) =
 let getCheckSumOfFile fileName (repetitionCheck:int[]) =
     getLineValuesFromFilePath fileName
     |> getCheckSumOfIds repetitionCheck
+
+let getValidId (str1:char[]) (str2:char[]) =
+    let indexedArr = Array.indexed str1
+    let diffChars = Array.filter (fun x -> str2.[fst x] <> snd x) indexedArr
+    if (diffChars.Length = 1) then
+        Array.filter (fun x -> fst x <> fst diffChars.[0]) indexedArr
+        |> Array.map (fun y -> snd y)
+        |> System.String
+    else
+        ""
+
+let rec getValidIdInArray (idArray:char[][]) =
+    if (idArray.Length <= 1) then
+        ""
+    else
+        let head = Array.head idArray
+        let tail = Array.tail idArray
+        let result = Array.map (getValidId head) tail
+                    |> Array.tryFind (fun x -> x.Length > 0)
+        if (result.IsSome) then
+            result.Value
+        else 
+            getValidIdInArray tail
+
+let getValidIdInFile fileName = 
+    getLineValuesFromFilePath fileName
+    |> Array.map explode
+    |> getValidIdInArray

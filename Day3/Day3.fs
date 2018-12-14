@@ -38,10 +38,14 @@ let getNumberOfDuplicatedClaims (matrix:char[,]) =
     Array2D.iter increaseCount matrix
     duplicatedCount
 
-let getDuplicatesFromClaimArray (claimArr:Claim[]) =
+let getFilledMatrix (claimArr:Claim[]) =
     let matrix = Array2D.init 1000 1000 (fun i j -> 'N')
     Array.iter (drawRectangleOnMatrix matrix) claimArr
-    getNumberOfDuplicatedClaims matrix, matrix
+    matrix
+
+let getDuplicatesFromClaimArray (claimArr:Claim[]) =
+    getFilledMatrix claimArr
+    |> getNumberOfDuplicatedClaims
 
 let getNonDuplicateClaim (claimArr:Claim[]) = 
     let mutable freeClaim = "" 
@@ -53,15 +57,13 @@ let getNonDuplicateClaim (claimArr:Claim[]) =
                     flag <- false
         if (flag) then freeClaim <- claim.Id
 
-    let matrix = getDuplicatesFromClaimArray claimArr |> snd
-    Array.iter (isClaimOccupied matrix) claimArr
+    Array.iter (isClaimOccupied (getFilledMatrix claimArr)) claimArr
     freeClaim
 
 let getDuplicatesFromFile fileName =
     getLineValuesFromFilePath fileName
     |> Array.map parseLineIntoClaim
     |> getDuplicatesFromClaimArray
-    |> fst
 
 let getNonDuplicateClaimFromFile fileName =
     getLineValuesFromFilePath fileName

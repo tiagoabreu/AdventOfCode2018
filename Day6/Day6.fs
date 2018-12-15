@@ -24,13 +24,20 @@ let getMaxY arrCoordinates =
     Array.map (fun x -> x.Y) arrCoordinates
     |> Array.max
 
+let getDistanceMap x y arrCoordinates =
+    Array.map (fun i -> i.Id, abs (i.X - x) + abs (i.Y - y)) arrCoordinates
+
 let findNearestCoordinate x y arrCoordinates : (int) =
-    let distanceMap = Array.map (fun i -> i.Id, abs (i.X - x) + abs (i.Y - y)) arrCoordinates
+    let distanceMap = getDistanceMap x y arrCoordinates
     let minimum = Array.minBy (fun i -> snd i) distanceMap
     if (1 = (Array.filter (fun x -> snd x = snd minimum) distanceMap).Length) then
         fst minimum
     else
         0
+
+let getSumOfDistances x y arrCoordinates =
+    getDistanceMap x y arrCoordinates
+    |> Array.sumBy (fun i -> snd i)
 
 let getLargestFiniteArea arrCoordinates =
     let minX = getMinX arrCoordinates
@@ -54,6 +61,17 @@ let getLargestFiniteArea arrCoordinates =
     |> Map.toArray
     |> Array.maxBy (fun u -> snd u)
     |> snd
+    
+let getAreaWithLessThanSpecifiedDistanceSum target arrCoordinates =
+    let minX = getMinX arrCoordinates
+    let maxX = getMaxX arrCoordinates
+    let minY = getMinY arrCoordinates
+    let maxY = getMaxY arrCoordinates
+    let mutable finalArea = 0
+    for x = minX to maxX do
+        for y = minY to maxY do
+            if (target > getSumOfDistances x y arrCoordinates) then finalArea <- finalArea + 1
+    finalArea
 
 let parseCoordinate (str:int*string) =
     let x = (snd str).[0 .. (snd str).IndexOf(",") - 1] |> int
@@ -65,3 +83,9 @@ let getLargestFiniteAreaFromFile fileName =
     |> Array.indexed
     |> Array.map (parseCoordinate)
     |> getLargestFiniteArea
+
+let getSafeAreaFromFile fileName =
+    getLineValuesFromFilePath fileName
+    |> Array.indexed
+    |> Array.map (parseCoordinate)
+    |> getAreaWithLessThanSpecifiedDistanceSum 10000

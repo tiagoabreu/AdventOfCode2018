@@ -2,7 +2,6 @@
 
 open CommonLib.Files
 open System
-open System
 
 type EventType =
     | BeginShift

@@ -33,12 +33,14 @@ let getMinimalReaction (chain:char[]) =
     minimalReactionLength
 
 let getLengthFromReactionInFile fileName =
-    (getLineValuesFromFilePath fileName).[0]
+    getLineValuesFromFilePath fileName
+    |> Array.exactlyOne
     |> explode 
     |> getLengthOfFinalReaction Int32.MaxValue 
 
 let getMinimalReactionInFile fileName =
-    (getLineValuesFromFilePath fileName).[0]
+    (getLineValuesFromFilePath fileName)
+    |> Array.exactlyOne
     |> explode 
     |> getMinimalReaction
 

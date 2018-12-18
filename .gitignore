@@ -455,4 +455,4 @@ bower_components
 Scripts/
 
 ### VS Code workspace ###
-.code-workspace
+*.code-workspace

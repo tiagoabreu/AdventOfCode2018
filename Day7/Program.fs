@@ -8,5 +8,7 @@ let main argv =
     printfn "Hello World from F#!"
     let result = getExecutionOfStepsFromFile "input.txt"
     printfn "%A" (result)
+    let result = getExecutionTimeOfStepsFromFile "input.txt"
+    printfn "%A" (result)
     let text = Console.ReadLine()
     0 // return an integer exit code

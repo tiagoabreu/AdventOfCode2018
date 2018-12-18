@@ -31,30 +31,55 @@ let getStepDuration (c:char) =
 let getWorkingDurationOfStepArray numWorkers stepArr =
     let isStepReadyForPickup doneList (inProgress:option<Step>[]) step =
         isStepReady doneList step && Option.isNone <| Array.tryFind (fun x -> Option.isSome x && x.Value.Id = step.Id) inProgress
-        
     let inProgress : option<Step>[] = Array.create numWorkers None
+    let rec getSecondsElapsed (secondsElapsed:int) (doneSteps: char list) = 
+
+        if (doneSteps.Length = Array.length stepArr) then secondsElapsed
+        else 
+            for i,v in Array.indexed inProgress do
+                if (Option.isSome v) then
+                    let updatedStep = v
+                    updatedStep.Value.RemainingDuration <- updatedStep.Value.RemainingDuration - 1
+                    Array.set inProgress i updatedStep
+                else
+                    let nextStep = Array.tryFind (isStepReadyForPickup doneSteps inProgress) stepArr
+                    if (Option.isSome nextStep) then
+                        nextStep.Value.RemainingDuration <- nextStep.Value.RemainingDuration - 1
+                        Array.set inProgress i nextStep
+
+            let filterFunction = fun (_,v) -> Option.isSome v && v.Value.RemainingDuration = 0
+            let finishedIds = Array.indexed inProgress 
+                            |> Array.filter filterFunction
+                            |> Array.map (fun (i,v) -> Array.set inProgress i None; v.Value.Id;) 
+                            |> Array.toList
+
+            getSecondsElapsed (secondsElapsed + 1) (doneSteps @ finishedIds)
+
+
     let mutable secondsElapsed = 0
     let mutable doneSteps = list.Empty
 
-    while (doneSteps.Length <> Array.length stepArr) do
-        secondsElapsed <- secondsElapsed + 1
-        for i,v in Array.indexed inProgress do
-            if (Option.isSome v) then
-                let updatedStep = v
-                updatedStep.Value.RemainingDuration <- updatedStep.Value.RemainingDuration - 1
-                Array.set inProgress i updatedStep
-            else
-                let nextStep = Array.tryFind (isStepReadyForPickup doneSteps inProgress) stepArr
-                if (Option.isSome nextStep) then
-                    nextStep.Value.RemainingDuration <- nextStep.Value.RemainingDuration - 1
-                    Array.set inProgress i nextStep
+    getSecondsElapsed 0 list.Empty
 
-        for i,v in Array.indexed inProgress do
-            if (Option.isSome v && v.Value.RemainingDuration = 0) then
-                doneSteps <- doneSteps @ [v.Value.Id]
-                Array.set inProgress i None
+    //while (doneSteps.Length <> Array.length stepArr) do
+    //    secondsElapsed <- secondsElapsed + 1
+    //    for i,v in Array.indexed inProgress do
+    //        if (Option.isSome v) then
+    //            let updatedStep = v
+    //            updatedStep.Value.RemainingDuration <- updatedStep.Value.RemainingDuration - 1
+    //            Array.set inProgress i updatedStep
+    //        else
+    //            let nextStep = Array.tryFind (isStepReadyForPickup doneSteps inProgress) stepArr
+    //            if (Option.isSome nextStep) then
+    //                nextStep.Value.RemainingDuration <- nextStep.Value.RemainingDuration - 1
+    //                Array.set inProgress i nextStep
 
-    secondsElapsed
+    //    for i,v in Array.indexed inProgress do
+    //        if (Option.isSome v && v.Value.RemainingDuration = 0) then
+    //            doneSteps <- doneSteps @ [v.Value.Id]
+    //            Array.set inProgress i None
+
+    //secondsElapsed
 
 let getStepListFromFile fileName = 
     let mutable stepList = List.empty<Step>

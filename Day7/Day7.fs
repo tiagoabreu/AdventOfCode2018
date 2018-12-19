@@ -14,8 +14,8 @@ let getOrderedSteps stepArr =
     Array.sortBy (fun x -> x.Id) stepArr
 
 let isStepReady currentStepList step =
-        not (List.contains step.Id currentStepList) &&
-        List.forall (fun r -> List.contains r currentStepList) step.Requirements
+    not (List.contains step.Id currentStepList) &&
+    List.forall (fun r -> List.contains r currentStepList) step.Requirements
 
 let rec getNextStep (currentStepList:list<char>) (stepArr:Step[]) =
     let nextStep = Array.tryFind (isStepReady currentStepList) stepArr
@@ -33,19 +33,24 @@ let getWorkingDurationOfStepArray numWorkers stepArr =
         isStepReady doneList step && Option.isNone <| Array.tryFind (fun x -> Option.isSome x && x.Value.Id = step.Id) inProgress
     let inProgress : option<Step>[] = Array.create numWorkers None
     let rec getSecondsElapsed (secondsElapsed:int) (doneSteps: char list) = 
-
         if (doneSteps.Length = Array.length stepArr) then secondsElapsed
         else 
-            for i,v in Array.indexed inProgress do
-                if (Option.isSome v) then
-                    let updatedStep = v
-                    updatedStep.Value.RemainingDuration <- updatedStep.Value.RemainingDuration - 1
-                    Array.set inProgress i updatedStep
-                else
-                    let nextStep = Array.tryFind (isStepReadyForPickup doneSteps inProgress) stepArr
-                    if (Option.isSome nextStep) then
-                        nextStep.Value.RemainingDuration <- nextStep.Value.RemainingDuration - 1
-                        Array.set inProgress i nextStep
+            let workOnTask i v =
+                v.RemainingDuration <- v.RemainingDuration - 1
+                Array.set inProgress i <| Some v
+
+            let startNewTask i =
+                let stepFun = isStepReadyForPickup doneSteps inProgress
+                let nextStep = Array.tryFind stepFun stepArr
+                if (nextStep.IsSome) then
+                    nextStep.Value.RemainingDuration <- nextStep.Value.RemainingDuration - 1
+                    Array.set inProgress i nextStep
+
+            let workerFunction = fun i v -> match v with
+                                                | Some value -> workOnTask i value
+                                                | None -> startNewTask i
+
+            Array.iteri workerFunction inProgress
 
             let filterFunction = fun (_,v) -> Option.isSome v && v.Value.RemainingDuration = 0
             let finishedIds = Array.indexed inProgress 
@@ -53,33 +58,10 @@ let getWorkingDurationOfStepArray numWorkers stepArr =
                             |> Array.map (fun (i,v) -> Array.set inProgress i None; v.Value.Id;) 
                             |> Array.toList
 
-            getSecondsElapsed (secondsElapsed + 1) (doneSteps @ finishedIds)
-
-
-    let mutable secondsElapsed = 0
-    let mutable doneSteps = list.Empty
+            doneSteps @ finishedIds
+            |> getSecondsElapsed (secondsElapsed + 1)
 
     getSecondsElapsed 0 list.Empty
-
-    //while (doneSteps.Length <> Array.length stepArr) do
-    //    secondsElapsed <- secondsElapsed + 1
-    //    for i,v in Array.indexed inProgress do
-    //        if (Option.isSome v) then
-    //            let updatedStep = v
-    //            updatedStep.Value.RemainingDuration <- updatedStep.Value.RemainingDuration - 1
-    //            Array.set inProgress i updatedStep
-    //        else
-    //            let nextStep = Array.tryFind (isStepReadyForPickup doneSteps inProgress) stepArr
-    //            if (Option.isSome nextStep) then
-    //                nextStep.Value.RemainingDuration <- nextStep.Value.RemainingDuration - 1
-    //                Array.set inProgress i nextStep
-
-    //    for i,v in Array.indexed inProgress do
-    //        if (Option.isSome v && v.Value.RemainingDuration = 0) then
-    //            doneSteps <- doneSteps @ [v.Value.Id]
-    //            Array.set inProgress i None
-
-    //secondsElapsed
 
 let getStepListFromFile fileName = 
     let mutable stepList = List.empty<Step>
@@ -99,11 +81,11 @@ let getStepListFromFile fileName =
                                       Duration = getStepDuration stepId; 
                                       RemainingDuration = getStepDuration stepId }]
         else
-           let idx = List.findIndex (fun x -> x.Id = stepId) stepList
-           let value = stepList.[idx]
-           stepList <- removeAt idx stepList
-           value.Requirements <- value.Requirements @ [requirement]
-           stepList <- stepList @ [value]
+            let idx = List.findIndex (fun x -> x.Id = stepId) stepList
+            let value = stepList.[idx]
+            stepList <- removeAt idx stepList
+            value.Requirements <- value.Requirements @ [requirement]
+            stepList <- stepList @ [value]
     
     getLineValuesFromFilePath fileName
     |> Array.iter parseLineIntoStep

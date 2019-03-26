@@ -15,7 +15,7 @@ let advanceStar star =
                     YPosition = star.YPosition + star.YVelocity }
 
 let getNewStarMap (currentMap) = 
-    Array.map (fun x -> advanceStar x) currentMap
+    Array.map advanceStar currentMap
 
 let printStarMap map =
     let bufferX = (Array.minBy (fun x -> x.XPosition) map).XPosition
@@ -23,11 +23,11 @@ let printStarMap map =
     let maxX = (Array.maxBy (fun x -> x.XPosition) map).XPosition
     let maxY = (Array.maxBy (fun x -> x.YPosition) map).YPosition
     if (maxX - bufferX < 100 && maxY - bufferY < 50 ) then
-        let starMap = Array2D.init (maxX - bufferX + 1) (maxY - bufferY + 1) (fun _ _ -> '.')
-        Array.iter (fun x -> Array2D.set starMap (x.XPosition - bufferX) (x.YPosition - bufferY) '#') map
+        let starMap = Array2D.init (maxX - bufferX + 1) (maxY - bufferY + 1) (fun _ _ -> ' ')
+        Array.iter (fun x -> Array2D.set starMap (x.XPosition - bufferX) (x.YPosition - bufferY) '*') map
 
         for r = 0 to Array2D.length2 starMap - 1 do
-            printfn "%A" <| System.String.Concat starMap.[*, r]
+            printfn "%A" <| String.Concat starMap.[*, r]
 
 let getStarMapWidth map =
     let minY = (Array.minBy (fun x -> x.YPosition) map).YPosition 
